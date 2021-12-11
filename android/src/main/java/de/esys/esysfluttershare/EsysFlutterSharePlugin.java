@@ -20,7 +20,6 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
-import android.app.Activity;
 
 /**
  * EsysFlutterSharePlugin
@@ -28,7 +27,9 @@ import android.app.Activity;
 public class EsysFlutterSharePlugin implements MethodCallHandler, FlutterPlugin, ActivityAware {
 
     private final String PROVIDER_AUTH_EXT = ".fileprovider.github.com/orgs/esysberlin/esys-flutter-share";
-    private Activity _activity;
+    
+    /// The context is needed to call startActivity
+    private Context _context;
 
     /// The MethodChannel that will the communication between Flutter and native Android
     ///
@@ -49,22 +50,22 @@ public class EsysFlutterSharePlugin implements MethodCallHandler, FlutterPlugin,
 
     @Override
     public void onAttachedToActivity(ActivityPluginBinding activityPluginBinding) {
-        _activity = activityPluginBinding.getActivity();
+        _context = activityPluginBinding.getActivity();
     }
 
     @Override
     public void onDetachedFromActivityForConfigChanges() {
-        _activity = null;
+        _context = null;
     }
 
     @Override
     public void onReattachedToActivityForConfigChanges(ActivityPluginBinding activityPluginBinding) {
-        _activity = activityPluginBinding.getActivity();
+        _context = activityPluginBinding.getActivity();
     }
 
     @Override
     public void onDetachedFromActivity() {
-        _activity = null;
+        _context = null;
     }
 
 
@@ -97,12 +98,10 @@ public class EsysFlutterSharePlugin implements MethodCallHandler, FlutterPlugin,
         String text = argsMap.get("text");
         String mimeType = argsMap.get("mimeType");
 
-        // Context activeContext = _context;
-
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType(mimeType);
         shareIntent.putExtra(Intent.EXTRA_TEXT, text);
-        _activity.startActivity(Intent.createChooser(shareIntent, title));
+        _context.startActivity(Intent.createChooser(shareIntent, title));
     }
 
     private void file(Object arguments) {
@@ -113,17 +112,15 @@ public class EsysFlutterSharePlugin implements MethodCallHandler, FlutterPlugin,
         String mimeType = argsMap.get("mimeType");
         String text = argsMap.get("text");
 
-        // Context activeContext = _context;
-
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType(mimeType);
-        File file = new File(_activity.getCacheDir(), name);
-        String fileProviderAuthority = _activity.getPackageName() + PROVIDER_AUTH_EXT;
-        Uri contentUri = FileProvider.getUriForFile(_activity, fileProviderAuthority, file);
+        File file = new File(_context.getCacheDir(), name);
+        String fileProviderAuthority = _context.getPackageName() + PROVIDER_AUTH_EXT;
+        Uri contentUri = FileProvider.getUriForFile(_context, fileProviderAuthority, file);
         shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
         // add optional text
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
-        _activity.startActivity(Intent.createChooser(shareIntent, title));
+        _context.startActivity(Intent.createChooser(shareIntent, title));
     }
 
     private void files(Object arguments) {
@@ -144,14 +141,14 @@ public class EsysFlutterSharePlugin implements MethodCallHandler, FlutterPlugin,
         ArrayList<Uri> contentUris = new ArrayList<>();
 
         for (String name : names) {
-            File file = new File(_activity.getCacheDir(), name);
-            String fileProviderAuthority = _activity.getPackageName() + PROVIDER_AUTH_EXT;
-            contentUris.add(FileProvider.getUriForFile(_activity, fileProviderAuthority, file));
+            File file = new File(_context.getCacheDir(), name);
+            String fileProviderAuthority = _context.getPackageName() + PROVIDER_AUTH_EXT;
+            contentUris.add(FileProvider.getUriForFile(_context, fileProviderAuthority, file));
         }
 
         shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, contentUris);
         // add optional text
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
-        _activity.startActivity(Intent.createChooser(shareIntent, title));
+        _context.startActivity(Intent.createChooser(shareIntent, title));
     }
 }
