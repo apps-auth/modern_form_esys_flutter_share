@@ -1,3 +1,4 @@
+## 1.1.0 Migrated to Android Embedding V2 by Pull Request #2 by ahmedabad
 ## 1.0.1 fix
 ## 1.0.0
 
